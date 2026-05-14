@@ -3,33 +3,29 @@ package tpv.dao;
 import tpv.db.Connexio;
 import tpv.model.Article;
 import tpv.model.Camisa;
+import tpv.model.Familia;
 import tpv.model.Pantalon;
 
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * DAO per gestionar els Articles a la base de dades.
- * Separa tota la lògica d'accés a dades de la lògica principal.
- */
 public class ArticleDAO {
 
     // ─── INSERIR ──────────────────────────────────────────────────────────────
 
     public boolean inserir(Article article) {
-        String sql;
         try {
             Connection conn = Connexio.getConnexio();
             PreparedStatement ps;
 
             if (article instanceof Camisa c) {
-                sql = "INSERT INTO articles (id, nom, familia, preu_base, iva, stock, talla_coll, amplada_pit) " +
+                String sql = "INSERT INTO articles (id, nom, familia, preu_base, iva, stock, talla_coll, amplada_pit) " +
                         "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
                 ps = conn.prepareStatement(sql);
                 ps.setInt(1, c.getId());
                 ps.setString(2, c.getNom());
-                ps.setString(3, c.getFamilia());
+                ps.setString(3, Familia.CAMISA.getNom());
                 ps.setDouble(4, c.getPreuBase());
                 ps.setInt(5, c.getIva());
                 ps.setInt(6, c.getStock());
@@ -37,12 +33,12 @@ public class ArticleDAO {
                 ps.setInt(8, c.getAmpladaPit());
 
             } else if (article instanceof Pantalon p) {
-                sql = "INSERT INTO articles (id, nom, familia, preu_base, iva, stock, talla_cintura, llargada_camal) " +
+                String sql = "INSERT INTO articles (id, nom, familia, preu_base, iva, stock, talla_cintura, llargada_camal) " +
                         "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
                 ps = conn.prepareStatement(sql);
                 ps.setInt(1, p.getId());
                 ps.setString(2, p.getNom());
-                ps.setString(3, p.getFamilia());
+                ps.setString(3, Familia.PANTALO.getNom());
                 ps.setDouble(4, p.getPreuBase());
                 ps.setInt(5, p.getIva());
                 ps.setInt(6, p.getStock());
@@ -69,14 +65,13 @@ public class ArticleDAO {
         try {
             Connection conn = Connexio.getConnexio();
             PreparedStatement ps;
-            String sql;
 
             if (article instanceof Camisa c) {
-                sql = "UPDATE articles SET nom=?, familia=?, preu_base=?, iva=?, stock=?, " +
+                String sql = "UPDATE articles SET nom=?, familia=?, preu_base=?, iva=?, stock=?, " +
                         "talla_coll=?, amplada_pit=?, talla_cintura=NULL, llargada_camal=NULL WHERE id=?";
                 ps = conn.prepareStatement(sql);
                 ps.setString(1, c.getNom());
-                ps.setString(2, c.getFamilia());
+                ps.setString(2, Familia.CAMISA.getNom());
                 ps.setDouble(3, c.getPreuBase());
                 ps.setInt(4, c.getIva());
                 ps.setInt(5, c.getStock());
@@ -85,11 +80,11 @@ public class ArticleDAO {
                 ps.setInt(8, c.getId());
 
             } else if (article instanceof Pantalon p) {
-                sql = "UPDATE articles SET nom=?, familia=?, preu_base=?, iva=?, stock=?, " +
+                String sql = "UPDATE articles SET nom=?, familia=?, preu_base=?, iva=?, stock=?, " +
                         "talla_cintura=?, llargada_camal=?, talla_coll=NULL, amplada_pit=NULL WHERE id=?";
                 ps = conn.prepareStatement(sql);
                 ps.setString(1, p.getNom());
-                ps.setString(2, p.getFamilia());
+                ps.setString(2, Familia.PANTALO.getNom());
                 ps.setDouble(3, p.getPreuBase());
                 ps.setInt(4, p.getIva());
                 ps.setInt(5, p.getStock());
@@ -178,7 +173,7 @@ public class ArticleDAO {
         return llista;
     }
 
-    // ─── EXISTEIX? ────────────────────────────────────────────────────────────
+    // ─── EXISTEIX ─────────────────────────────────────────────────────────────
 
     public boolean existeix(int id) {
         return buscarPerId(id) != null;
@@ -228,32 +223,45 @@ public class ArticleDAO {
         return llista;
     }
 
-    // ─── MÈTODE AUXILIAR: construir Article des de ResultSet ─────────────────
+    // ─── AUXILIAR: construir Article des de ResultSet ─────────────────────────
 
     private Article construirArticle(ResultSet rs) throws SQLException {
-        String familia = rs.getString("familia").toLowerCase();
+        String familiaStr = rs.getString("familia").toLowerCase();
+        Familia familia;
 
-        if (familia.equals("camisa")) {
-            return new Camisa(
-                    rs.getInt("id"),
-                    rs.getString("nom"),
-                    rs.getDouble("preu_base"),
-                    rs.getInt("iva"),
-                    rs.getInt("stock"),
-                    rs.getInt("talla_coll"),
-                    rs.getInt("amplada_pit")
-            );
-        } else if (familia.equals("pantaló") || familia.equals("pantalo")) {
-            return new Pantalon(
-                    rs.getInt("id"),
-                    rs.getString("nom"),
-                    rs.getDouble("preu_base"),
-                    rs.getInt("iva"),
-                    rs.getInt("stock"),
-                    rs.getInt("talla_cintura"),
-                    rs.getInt("llargada_camal")
-            );
+        try {
+            familia = Familia.perNom(familiaStr);
+        } catch (IllegalArgumentException e) {
+            System.err.println("⚠ Família desconeguda a la BD: " + familiaStr);
+            return null;
         }
-        return null;
+
+        switch (familia) {
+            case CAMISA -> {
+                return new Camisa(
+                        rs.getInt("id"),
+                        rs.getString("nom"),
+                        rs.getDouble("preu_base"),
+                        rs.getInt("iva"),
+                        rs.getInt("stock"),
+                        rs.getInt("talla_coll"),
+                        rs.getInt("amplada_pit")
+                );
+            }
+            case PANTALO -> {
+                return new Pantalon(
+                        rs.getInt("id"),
+                        rs.getString("nom"),
+                        rs.getDouble("preu_base"),
+                        rs.getInt("iva"),
+                        rs.getInt("stock"),
+                        rs.getInt("talla_cintura"),
+                        rs.getInt("llargada_camal")
+                );
+            }
+            default -> {
+                return null;
+            }
+        }
     }
 }
