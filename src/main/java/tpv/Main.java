@@ -2,6 +2,8 @@ package tpv;
 
 import tpv.db.Connexio;
 import tpv.json.GestorJson;
+import tpv.Menu.GestioArticles;
+import tpv.Menu.GestioClients;
 import tpv.model.Article;
 import tpv.model.Camisa;
 import tpv.model.Pantalon;
@@ -10,10 +12,6 @@ import java.sql.*;
 import java.util.List;
 import java.util.Scanner;
 
-/**
- * Classe principal del TPV.
- * Gestiona el menú principal i delega a les classes corresponents.
- */
 public class Main {
 
     private static final Scanner sc = new Scanner(System.in);
@@ -31,8 +29,8 @@ public class Main {
 
             switch (opcio) {
                 case 1 -> importacioArticles();
-                case 2 -> gestioArticles();
-                case 3 -> gestioClients();
+                case 2 -> GestioArticles.mostrarMenu();
+                case 3 -> GestioClients.mostrarMenu();
                 case 4 -> tpv();
                 case 5 -> consultaVendesPerClient();
                 case 6 -> consultaVendesPerArticle();
@@ -50,10 +48,8 @@ public class Main {
         sc.close();
     }
 
-    // ─── MENÚ PRINCIPAL ───────────────────────────────────────────────────────
-
     private static void mostrarMenuPrincipal() {
-        System.out.println("┌──────────────────────────────────────┐");
+        System.out.println("\n┌──────────────────────────────────────┐");
         System.out.println("│           MENÚ PRINCIPAL             │");
         System.out.println("├──────────────────────────────────────┤");
         System.out.println("│  1. Importació d'articles            │");
@@ -65,13 +61,13 @@ public class Main {
         System.out.println("│  7. Calcula els beneficis totals     │");
         System.out.println("│  8. Recompra automàtica d'articles   │");
         System.out.println("│  0. Sortir                           │");
-        System.out.println("└──────────────────────────────────────┘");
+        System.out.println("└──────────────────────════════════════┘");
     }
 
     // ─── OPCIÓ 1: IMPORTACIÓ D'ARTICLES ──────────────────────────────────────
 
     private static void importacioArticles() {
-        System.out.println("── Importació d'articles des de JSON ──");
+        System.out.println("\n── Importació d'articles des de JSON ──");
 
         List<Article> articles = jsonReader.llegirArticles("articles.json");
 
@@ -83,12 +79,12 @@ public class Main {
         long numCamises   = articles.stream().filter(a -> a.getFamilia().equals("camisa")).count();
         long numPantalons = articles.stream().filter(a -> a.getFamilia().equals("pantaló")).count();
 
-        System.out.println("Articles llegits del fitxer:");
+        System.out.println("\nArticles llegits del fitxer:");
         System.out.println("  • Camises:   " + numCamises);
         System.out.println("  • Pantalons: " + numPantalons);
         System.out.println("  • Total:     " + articles.size());
 
-        System.out.print("Vols volcar els articles a la base de dades? (s/n): ");
+        System.out.print("\nVols volcar els articles a la base de dades? (s/n): ");
         String resposta = sc.nextLine().trim().toLowerCase();
 
         if (!resposta.equals("s")) {
@@ -119,7 +115,7 @@ public class Main {
                 psCheck.close();
             }
 
-            System.out.println("\n✔ Importació completada:");
+            System.out.println("✔ Importació completada:");
             System.out.println("  • Articles afegits:      " + afegits);
             System.out.println("  • Articles actualitzats: " + actualitzats);
 
@@ -200,15 +196,7 @@ public class Main {
         ps.close();
     }
 
-    // ─── OPCIONS PENDENTS (Sprints 2, 3, 4) ──────────────────────────────────
-
-    private static void gestioArticles() {
-        System.out.println("[TODO - Sprint 2] Gestió d'articles");
-    }
-
-    private static void gestioClients() {
-        System.out.println("[TODO - Sprint 2] Gestió de clients");
-    }
+    // ─── OPCIONS PENDENTS (Sprints 3, 4) ─────────────────────────────────────
 
     private static void tpv() {
         System.out.println("[TODO - Sprint 3] TPV");
